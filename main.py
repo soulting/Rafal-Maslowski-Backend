@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+import bcrypt
 
 app = Flask(__name__)
 
@@ -7,9 +8,13 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://andrzej:tqARnzFdqcAgkAjRUDaOhxD6QubWWjnW@dpg-cqovvodds78s73e1r4n0-a.oregon-postgres.render.com/blog_nhev'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-
-
 db = SQLAlchemy(app)
+
+def hash_password(password):
+    # Generowanie soli i haszowanie hasła
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed_password
 
 
 # Definicja modelu dla tabeli owner
@@ -51,7 +56,7 @@ def add_owner():
 @app.route('/get_owners', methods=['GET'])
 def get_owners():
     owners = Owner.query.all()
-    result = [{'owner_id': owner.owner_id, 'username': owner.username} for owner in owners]
+    result = [{'owner_id': owner.owner_id, 'username': owner.username, 'password': owner.password} for owner in owners]
     return jsonify(result)
 
 
