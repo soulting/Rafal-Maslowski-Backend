@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/qwerty', methods=['GET', 'POST'])
 def handle_request():
     if request.method == 'POST':
         data = request.get_json()  # Odbiera dane w formacie JSON
