@@ -18,7 +18,7 @@ def hash_password(password):
     return hashed_password
 
 
-# Definicja modelu dla tabeli owner
+# Definicja modelu dla tabel
 class Owner(db.Model):
     __tablename__ = 'owner'
     owner_id = db.Column(db.Integer, primary_key=True)
@@ -30,6 +30,17 @@ class PersonalInformation(db.Model):
     personal_information_id = db.Column(db.Integer, primary_key=True)
     image_url = db.Column(db.String(255),  nullable=False)
     description = db.Column(db.String(255), nullable=False)
+
+class ContactInfo(db.Model):
+    __tablename__ = 'contact_info'
+    contact_info_id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(255),  nullable=False)
+    phone = db.Column(db.String(255), nullable=False)
+    address = db.Column(db.String(255), nullable=False)
+    facebook = db.Column(db.String(255), nullable=False)
+    instagram = db.Column(db.String(255), nullable=False)
+    twitter = db.Column(db.String(255), nullable=False)
+    linkedin = db.Column(db.String(255), nullable=False)
 
 
 
@@ -103,5 +114,45 @@ def get_last_owner():
         return jsonify({"status": "error", "message": "No data found"}), 404
 
 
+#
+
+@app.route('/add_contacts', methods=['POST'])
+def add_contacts():
+    data = request.get_json()
+    email = data.get('email')
+    phone = data.get('phone')
+    address = data.get('address')
+    facebook = data.get('facebook')
+    instagram = data.get('instagram')
+    twitter = data.get('twitter')
+    linkedin = data.get('linkedin')
+
+    # Sprawdzenie czy wszystkie wymagane pola są uzupełnione
+    if not email or not phone or not address or not facebook or not instagram or not twitter or not linkedin:
+        return jsonify({"status": "error", "message": "All fields are required!"}), 400
+
+    # Tworzenie nowego wpisu z danymi kontaktowymi
+    new_contact_info = ContactInfo(
+        email=email,
+        phone=phone,
+        address=address,
+        facebook=facebook,
+        instagram=instagram,
+        twitter=twitter,
+        linkedin=linkedin
+    )
+
+    # Dodanie nowego wpisu do sesji i zapisanie do bazy danych
+    db.session.add(new_contact_info)
+    db.session.commit()
+
+    return jsonify({"status": "success", "message": "Contact information added!"}), 201
+
+
+@app.route('/get_owners', methods=['GET'])
+def get_owners():
+    owners = Owner.query.all()
+    result = [{'owner_id': owner.owner_id, 'username': owner.username, 'password': owner.password} for owner in owners]
+    return jsonify(result)
 if __name__ == '__main__':
     app.run(debug=True)
