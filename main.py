@@ -149,10 +149,10 @@ def add_contacts():
     return jsonify({"status": "success", "message": "Contact information added!"}), 201
 
 
-@app.route('/get_owners', methods=['GET'])
-def get_owners():
-    owners = Owner.query.all()
-    result = [{'owner_id': owner.owner_id, 'username': owner.username, 'password': owner.password} for owner in owners]
-    return jsonify(result)
+# @app.route('/get_owners', methods=['GET'])
+# def get_owners():
+#     owners = Owner.query.all()
+#     result = [{'owner_id': owner.owner_id, 'username': owner.username, 'password': owner.password} for owner in owners]
+#     return jsonify(result)
 if __name__ == '__main__':
     app.run(debug=True)
