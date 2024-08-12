@@ -26,7 +26,7 @@ class Owner(db.Model):
 
 class PersonalInformation(db.Model):
     __tablename__ = 'personal_information'
-    personal_information_idc = db.Column(db.Integer, primary_key=True)
+    personal_information_id = db.Column(db.Integer, primary_key=True)
     image_url = db.Column(db.String(255),  nullable=False)
     description = db.Column(db.String(255), nullable=False)
 
@@ -55,7 +55,6 @@ def add_owner():
 
     return jsonify({"status": "success", "message": "Owner added!"}), 201
 
-
 @app.route('/get_owners', methods=['GET'])
 def get_owners():
     owners = Owner.query.all()
@@ -76,9 +75,6 @@ def add_personal_information():
     db.session.commit()
 
     return jsonify({"status": "success", "message": "Personal information added!"}), 201
-
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
