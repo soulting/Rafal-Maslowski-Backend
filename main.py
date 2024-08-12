@@ -69,7 +69,7 @@ def add_personal_information():
     description = data.get('description')
     image_data = data.get('image_data')
 
-    if not image_url or not description or image_data:
+    if not image_url or not description or not image_data:
         return jsonify({"status": "error", "message": "image and description required!"}), 400
 
     with open(image_url, "wb") as fh:
