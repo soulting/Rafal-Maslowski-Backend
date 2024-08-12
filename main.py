@@ -87,11 +87,16 @@ def get_last_owner():
     newest_personal_information = PersonalInformation.query.order_by(
         PersonalInformation.personal_information_id.desc()).first()
 
+
+    with open(f"01_files/01_profile_img/{newest_personal_information.image_url}", "rb") as image_file:
+        image_data = image_file.read()
+        image_data_b64 = base64.b64encode(image_data).decode('utf-8')
+
     if newest_personal_information:
         result = {
-            'personal_information_id': newest_personal_information.image_url,
-            'personal_information_description': newest_personal_information.description,
-
+            'image_url': newest_personal_information.image_url,
+            'description': newest_personal_information.description,
+            'image_data': image_data_b64
         }
         return jsonify(result)
     else:
