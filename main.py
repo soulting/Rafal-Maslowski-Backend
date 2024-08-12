@@ -71,7 +71,7 @@ def add_personal_information():
     if not image_url or not description:
         return jsonify({"status": "error", "message": "image and description required!"}), 400
 
-    new_personal_information = Owner(image_url=image_url, description=description)
+    new_personal_information = PersonalInformation(image_url=image_url, description=description)
     db.session.add(new_personal_information)
     db.session.commit()
 
