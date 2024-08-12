@@ -72,7 +72,7 @@ def add_personal_information():
     if not image_url or not description or not image_data:
         return jsonify({"status": "error", "message": "image and description required!"}), 400
 
-    with open(image_url, "wb") as fh:
+    with open(f"01_files/01_profile_img/{image_url}", "wb") as fh:
         fh.write(base64.b64decode(image_data.split(",")[1]))
 
     new_personal_information = PersonalInformation(image_url=image_url, description=description)
