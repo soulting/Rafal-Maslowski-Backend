@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import bcrypt
+import base64
 
 app = Flask(__name__)
 
@@ -66,9 +67,13 @@ def add_personal_information():
     data = request.get_json()
     image_url = data.get('image_url')
     description = data.get('description')
+    image_data = data.get('image_data')
 
-    if not image_url or not description:
+    if not image_url or not description or image_data:
         return jsonify({"status": "error", "message": "image and description required!"}), 400
+
+    with open(image_url, "wb") as fh:
+        fh.write(base64.b64decode(image_data.split(",")[1]))
 
     new_personal_information = PersonalInformation(image_url=image_url, description=description)
     db.session.add(new_personal_information)
