@@ -24,14 +24,17 @@ class Owner(db.Model):
     username = db.Column(db.String(255), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
 
-    def __repr__(self):
-        return f'<Owner {self.username}>'
+class PersonalInformation(db.Model):
+    __tablename__ = 'personal_information'
+    personal_information_idc = db.Column(db.Integer, primary_key=True)
+    image_url = db.Column(db.String(255),  nullable=False)
+    description = db.Column(db.String(255), nullable=False)
+
 
 
 @app.route('/')
 def index():
     return "Hello, Flask with PostgreSQL!"
-
 
 @app.route('/add_owner', methods=['POST'])
 def add_owner():
@@ -58,6 +61,23 @@ def get_owners():
     owners = Owner.query.all()
     result = [{'owner_id': owner.owner_id, 'username': owner.username, 'password': owner.password} for owner in owners]
     return jsonify(result)
+
+@app.route('/add_personal_information', methods=['POST'])
+def add_personal_information():
+    data = request.get_json()
+    image_url = data.get('image_url')
+    description = data.get('description')
+
+    if not image_url or not description:
+        return jsonify({"status": "error", "message": "image and description required!"}), 400
+
+    new_personal_information = Owner(image_url=image_url, description=description)
+    db.session.add(new_personal_information)
+    db.session.commit()
+
+    return jsonify({"status": "success", "message": "Personal information added!"}), 201
+
+
 
 
 if __name__ == '__main__':
