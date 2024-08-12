@@ -76,5 +76,22 @@ def add_personal_information():
 
     return jsonify({"status": "success", "message": "Personal information added!"}), 201
 
+
+@app.route('/get_personal_information', methods=['GET'])
+def get_last_owner():
+    newest_personal_information = PersonalInformation.query.order_by(
+        PersonalInformation.personal_information_id.desc()).first()
+
+    if newest_personal_information:
+        result = {
+            'personal_information_id': newest_personal_information.image_url,
+            'personal_information_description': newest_personal_information.description,
+
+        }
+        return jsonify(result)
+    else:
+        return jsonify({"status": "error", "message": "No data found"}), 404
+
+
 if __name__ == '__main__':
     app.run(debug=True)
