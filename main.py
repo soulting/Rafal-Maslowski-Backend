@@ -150,7 +150,7 @@ def add_contacts():
 
 
 @app.route('/get_contacts', methods=['GET'])
-def get_owners():
+def get_contacts():
     contacts_infos = ContactInfo.query.all()
     result = [{
         'contact_info_id': contacts_info.contact_info_id,
