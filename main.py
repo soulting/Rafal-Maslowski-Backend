@@ -2,11 +2,12 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import bcrypt
 import base64
+import os
 
 app = Flask(__name__)
 
 # Konfiguracja połączenia z bazą danych PostgreSQL
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://andrzej:tqARnzFdqcAgkAjRUDaOhxD6QubWWjnW@dpg-cqovvodds78s73e1r4n0-a.oregon-postgres.render.com/blog_nhev'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{os.getenv('USERNAME')}:{os.getenv('DB_PASSWD')}@{'DB_HOST'}/{'DB_NAME'}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -22,10 +23,10 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 def send_email(subject, body, to_email):
-    from_email = "rafal.maslowski.portfolio@onet.pl"
-    password = "tqARnzFdqcAgkAjRUDaOhxD6QubWWjnW"
-    smtp_server = "smtp.poczta.onet.pl"
-    port = 587
+    from_email = os.getenv('FROM_EMAIL')
+    password = os.getenv('EMAIL_PASSWD')
+    smtp_server = os.getenv('SMTP_SERVER')
+    port = os.getenv('SMTP_PORT')
 
     # Tworzenie wiadomości e-mail
     msg = MIMEMultipart()
@@ -203,8 +204,8 @@ def send_mail():
     data = request.get_json()
     subject = data.get('subject')
     body = data.get('body')
-    to_email = data.get('to_email')
-    result = send_email(subject, body, to_email)
+    from_email = data.get('from_email')
+    result = send_email(subject, body, from_email)
 
     return jsonify({"message": result})
 
