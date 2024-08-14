@@ -7,7 +7,7 @@ import os
 app = Flask(__name__)
 
 # Konfiguracja połączenia z bazą danych PostgreSQL
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{os.getenv('USERNAME')}:{os.getenv('DB_PASSWD')}@{'DB_HOST'}/{'DB_NAME'}'
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{os.getenv('USERNAME')}:{os.getenv('DB_PASSWD')}@{'DB_HOST'}/{'DB_NAME'}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
