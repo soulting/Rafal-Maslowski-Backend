@@ -149,10 +149,24 @@ def add_contacts():
     return jsonify({"status": "success", "message": "Contact information added!"}), 201
 
 
-# @app.route('/get_owners', methods=['GET'])
-# def get_owners():
-#     owners = Owner.query.all()
-#     result = [{'owner_id': owner.owner_id, 'username': owner.username, 'password': owner.password} for owner in owners]
-#     return jsonify(result)
+@app.route('/get_contacts', methods=['GET'])
+def get_owners():
+    contacts_infos = ContactInfo.query.all()
+    result = [{
+        'contact_info_id': contacts_info.contact_info_id,
+        'email': contacts_info.email,
+        'phone': contacts_info.phone,
+        'address': contacts_info.address,
+        'facebook': contacts_info.facebook,
+        'instagram': contacts_info.instagram,
+        'twitter': contacts_info.twitter,
+        'linkedin': contacts_info.linkedin
+    } for contacts_info in contacts_infos]
+
+    return jsonify(result)
+
+
+
+
 if __name__ == '__main__':
     app.run(debug=True)
