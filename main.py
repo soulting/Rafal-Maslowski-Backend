@@ -35,17 +35,22 @@ def send_email(subject, body):
     msg['Subject'] = subject
     msg.attach(MIMEText(body, 'plain'))
 
-    try:
-        # Połączenie z serwerem SMTP
-        server = smtplib.SMTP(smtp_server, port)
-        server.starttls()
+    with smtplib.SMTP(smtp_server, port) as server:
+        server.starttls()  # Używa TLS dla bezpieczeństwa
         server.login(from_email, password)
-        server.sendmail(from_email, os.getenv('TO_EMAIL'), msg.as_string())
-        server.quit()
+        server.send_message(msg)
 
-        return "E-mail wysłany pomyślnie!"
-    except Exception as e:
-        return f"Błąd: {e}"
+    # try:
+    #     # Połączenie z serwerem SMTP
+    #     server = smtplib.SMTP(smtp_server, port)
+    #     server.starttls()
+    #     server.login(from_email, password)
+    #     server.sendmail(from_email, os.getenv('TO_EMAIL'), msg.as_string())
+    #     server.quit()
+    #
+    #     return "E-mail wysłany pomyślnie!"
+    # except Exception as e:
+    #     return f"Błąd: {e}"
 
 
 
