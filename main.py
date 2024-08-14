@@ -26,7 +26,7 @@ def send_email(subject, body, to_email):
     from_email = os.getenv('FROM_EMAIL')
     password = os.getenv('EMAIL_PASSWD')
     smtp_server = os.getenv('SMTP_SERVER')
-    port = os.getenv('SMTP_PORT')
+    port = 587
 
     # Tworzenie wiadomości e-mail
     msg = MIMEMultipart()
