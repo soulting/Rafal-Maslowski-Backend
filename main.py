@@ -17,6 +17,38 @@ def hash_password(password):
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
     return hashed_password
 
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+def send_email(subject, body, to_email):
+    from_email = "rafal.maslowski.portfolio@onet.pl"
+    password = "tqARnzFdqcAgkAjRUDaOhxD6QubWWjnW"
+    smtp_server = "smtp.poczta.onet.pl"
+    port = 587
+
+    # Tworzenie wiadomości e-mail
+    msg = MIMEMultipart()
+    msg['From'] = from_email
+    msg['To'] = to_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'plain'))
+
+    try:
+        # Połączenie z serwerem SMTP
+        server = smtplib.SMTP(smtp_server, port)
+        server.starttls()
+        server.login(from_email, password)
+        server.sendmail(from_email, to_email, msg.as_string())
+        server.quit()
+
+        return "E-mail wysłany pomyślnie!"
+    except Exception as e:
+        return f"Błąd: {e}"
+
+
+
+
 
 # Definicja modelu dla tabel
 class Owner(db.Model):
@@ -92,7 +124,6 @@ def add_personal_information():
 
     return jsonify({"status": "success", "message": "Personal information added!"}), 201
 
-
 @app.route('/get_personal_information', methods=['GET'])
 def get_last_owner():
     newest_personal_information = PersonalInformation.query.order_by(
@@ -112,9 +143,6 @@ def get_last_owner():
         return jsonify(result)
     else:
         return jsonify({"status": "error", "message": "No data found"}), 404
-
-
-#
 
 @app.route('/add_contacts', methods=['POST'])
 def add_contacts():
@@ -168,6 +196,17 @@ def get_contacts():
     else:
         return jsonify({"status": "error", "message": "No data found"}), 404
 
+
+@app.route('/send_mail', methods=['POST'])
+def send_mail():
+
+    data = request.get_json()
+    subject = data.get('subject')
+    body = data.get('body')
+    to_email = data.get('to_email')
+    result = send_email(subject, body, to_email)
+
+    return jsonify({"message": result})
 
 
 
