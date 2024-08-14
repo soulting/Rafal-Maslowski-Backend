@@ -151,19 +151,22 @@ def add_contacts():
 
 @app.route('/get_contacts', methods=['GET'])
 def get_contacts():
-    contacts_infos = ContactInfo.query.all()
-    result = [{
-        'contact_info_id': contacts_info.contact_info_id,
-        'email': contacts_info.email,
-        'phone': contacts_info.phone,
-        'address': contacts_info.address,
-        'facebook': contacts_info.facebook,
-        'instagram': contacts_info.instagram,
-        'twitter': contacts_info.twitter,
-        'linkedin': contacts_info.linkedin
-    } for contacts_info in contacts_infos]
+    newest_contacts_info = ContactInfo.query.order_by(ContactInfo.contact_info_id.desc()).first()
 
-    return jsonify(result)
+    if newest_contacts_info:
+        result = {
+            'contact_info_id': newest_contacts_info.contact_info_id,
+            'email': newest_contacts_info.email,
+            'phone': newest_contacts_info.phone,
+            'address': newest_contacts_info.address,
+            'facebook': newest_contacts_info.facebook,
+            'instagram': newest_contacts_info.instagram,
+            'twitter': newest_contacts_info.twitter,
+            'linkedin': newest_contacts_info.linkedin
+        }
+        return jsonify(result)
+    else:
+        return jsonify({"status": "error", "message": "No data found"}), 404
 
 
 
