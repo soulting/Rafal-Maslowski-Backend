@@ -3,11 +3,16 @@ from flask_sqlalchemy import SQLAlchemy
 import bcrypt
 import base64
 import os
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
 
 # Konfiguracja połączenia z bazą danych PostgreSQL
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DB_URL")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DB_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -18,9 +23,7 @@ def hash_password(password):
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
     return hashed_password
 
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+
 
 def send_email(subject, body):
     from_email = os.getenv('FROM_EMAIL')
