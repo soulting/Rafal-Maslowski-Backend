@@ -49,10 +49,6 @@ def send_email(subject, body):
     except Exception as e:
         return f"Błąd: {e}"
 
-
-
-
-
 # Definicja modelu dla tabel
 class Owner(db.Model):
     __tablename__ = 'owner'
@@ -76,6 +72,13 @@ class ContactInfo(db.Model):
     instagram = db.Column(db.String(255), nullable=False)
     twitter = db.Column(db.String(255), nullable=False)
     linkedin = db.Column(db.String(255), nullable=False)
+
+class Link(db.Model):
+    __tablename__ = 'links'
+    link_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255),  nullable=False)
+    url = db.Column(db.String(255),  nullable=False)
+
 
 
 
@@ -202,13 +205,53 @@ def get_contacts():
 
 @app.route('/send_mail', methods=['POST'])
 def send_mail():
-
     data = request.get_json()
     subject = data.get('subject')
     body = data.get('body')
     result = send_email(subject, body)
-
     return jsonify({"message": result})
+
+@app.route('/add_link', methods=['POST'])
+def add_link():
+    data = request.get_json()
+    name = data.get('name')
+    url = data.get('url')
+
+    # Sprawdzenie czy wszystkie wymagane pola są uzupełnione
+    if not name or not url:
+        return jsonify({"status": "error", "message": "All fields are required!"}), 400
+
+    # Tworzenie nowego wpisu z danymi kontaktowymi
+    new_link = Link(
+        name=name,
+        url=url
+    )
+
+    # Dodanie nowego wpisu do sesji i zapisanie do bazy danych
+    db.session.add(new_link)
+    db.session.commit()
+
+    return jsonify({"status": "success", "message": "Link added!"}), 201
+
+
+# @app.route('/get_contacts', methods=['GET'])
+# def get_contacts():
+#     newest_contacts_info = ContactInfo.query.order_by(ContactInfo.contact_info_id.desc()).first()
+#
+#     if newest_contacts_info:
+#         result = {
+#             'contact_info_id': newest_contacts_info.contact_info_id,
+#             'email': newest_contacts_info.email,
+#             'phone': newest_contacts_info.phone,
+#             'address': newest_contacts_info.address,
+#             'facebook': newest_contacts_info.facebook,
+#             'instagram': newest_contacts_info.instagram,
+#             'twitter': newest_contacts_info.twitter,
+#             'linkedin': newest_contacts_info.linkedin
+#         }
+#         return jsonify(result)
+#     else:
+#         return jsonify({"status": "error", "message": "No data found"}), 404
 
 
 
