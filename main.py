@@ -7,7 +7,7 @@ import os
 app = Flask(__name__)
 
 # Konfiguracja połączenia z bazą danych PostgreSQL
-app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{os.getenv('USERNAME')}:{os.getenv('DB_PASSWD')}@{'DB_HOST'}/{'DB_NAME'}"
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DB_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -108,8 +108,11 @@ def add_owner():
 @app.route('/get_owners', methods=['GET'])
 def get_owners():
     owners = Owner.query.all()
-    result = [{'owner_id': owner.owner_id, 'username': owner.username, 'password': owner.password} for owner in owners]
-    return jsonify(result)
+    if owners:
+        result = [{'owner_id': owner.owner_id, 'username': owner.username, 'password': owner.password} for owner in owners]
+        return jsonify(result)
+    else:
+        return jsonify({"status": "error", "message": "No data found"}), 404
 
 @app.route('/add_personal_information', methods=['POST'])
 def add_personal_information():
@@ -234,24 +237,20 @@ def add_link():
     return jsonify({"status": "success", "message": "Link added!"}), 201
 
 
-# @app.route('/get_contacts', methods=['GET'])
-# def get_contacts():
-#     newest_contacts_info = ContactInfo.query.order_by(ContactInfo.contact_info_id.desc()).first()
-#
-#     if newest_contacts_info:
-#         result = {
-#             'contact_info_id': newest_contacts_info.contact_info_id,
-#             'email': newest_contacts_info.email,
-#             'phone': newest_contacts_info.phone,
-#             'address': newest_contacts_info.address,
-#             'facebook': newest_contacts_info.facebook,
-#             'instagram': newest_contacts_info.instagram,
-#             'twitter': newest_contacts_info.twitter,
-#             'linkedin': newest_contacts_info.linkedin
-#         }
-#         return jsonify(result)
-#     else:
-#         return jsonify({"status": "error", "message": "No data found"}), 404
+@app.route('/get_links', methods=['GET'])
+def get_links():
+    links = Link.query.all()
+
+    if links:
+        result = [{
+            'link_id': link.link_id,
+            'name': link.name,
+            'url': link.url,
+
+        } for link in links]
+        return jsonify(result)
+    else:
+        return jsonify({"status": "error", "message": "No data found"}), 404
 
 
 
