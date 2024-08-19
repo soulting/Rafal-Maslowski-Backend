@@ -292,7 +292,7 @@ def add_statistics():
 
 
 @app.route('/get_statistics', methods=['GET'])
-def get_links():
+def get_statistics():
     statistics = Statistics.query.all()
 
     if statistics:
