@@ -286,30 +286,26 @@ def add_statistics():
     db.session.add(new_statistics)
     db.session.commit()
 
-    return jsonify({"status": "success", "message": "Link added!"}), 201
-
-
-    satisfied_clients = db.Column(db.Integer, nullable=False)
-    banks_insurers = db.Column(db.Integer, nullable=False)
-    years_of_experience = db.Column(db.Integer, nullable=False)
-    loans_issued = db.Column(db.Integer, nullable=False)
+    return jsonify({"status": "success", "message": "Statistics added!"}), 201
 
 
 
-# @app.route('/get_links', methods=['GET'])
-# def get_links():
-#     links = Link.query.all()
-#
-#     if links:
-#         result = [{
-#             'link_id': link.link_id,
-#             'name': link.name,
-#             'url': link.url,
-#
-#         } for link in links]
-#         return jsonify(result)
-#     else:
-#         return jsonify({"status": "error", "message": "No data found"}), 404
+
+@app.route('/get_statistics', methods=['GET'])
+def get_links():
+    statistics = Statistics.query.all()
+
+    if statistics:
+        result = [{
+        'satisfied_clients' : statistic.satisfied_clients,
+        'banks_insurers' : statistic.banks_insurers,
+        'years_of_experience' : statistic.years_of_experience,
+        'loans_issued' : statistic.loans_issued
+
+        } for statistic in statistics]
+        return jsonify(result)
+    else:
+        return jsonify({"status": "error", "message": "No data found"}), 404
 
 
 
