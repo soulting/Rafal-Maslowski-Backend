@@ -375,7 +375,7 @@ def add_partner():
             400,
         )
 
-    with open(f"01_files/02_partner_img/{img_url}", "wb") as fh:
+    with open(f"01_files/01_profile_img/{img_url}", "wb") as fh:
         fh.write(base64.b64decode(image_data.split(",")[1]))
 
     new_partner = Partners(img_url=img_url, description=description, name=name)
