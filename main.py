@@ -82,7 +82,13 @@ class Link(db.Model):
     name = db.Column(db.String(255),  nullable=False)
     url = db.Column(db.String(255),  nullable=False)
 
-
+class Statistics(db.Model):
+    __tablename__ = 'statistics'
+    statistics_id = db.Column(db.Integer, primary_key=True)
+    satisfied_clients = db.Column(db.Integer, nullable=False)
+    banks_insurers = db.Column(db.Integer, nullable=False)
+    years_of_experience = db.Column(db.Integer, nullable=False)
+    loans_issued = db.Column(db.Integer, nullable=False)
 
 
 @app.route('/')
@@ -254,6 +260,56 @@ def get_links():
         return jsonify(result)
     else:
         return jsonify({"status": "error", "message": "No data found"}), 404
+
+@app.route('/add_statistics', methods=['POST'])
+def add_statistics():
+    data = request.get_json()
+    satisfied_clients = data.get('satisfied_clients')
+    banks_insurers = data.get('banks_insurers')
+    years_of_experience = data.get('years_of_experience')
+    loans_issued = data.get('loans_issued')
+
+    # Sprawdzenie czy wszystkie wymagane pola są uzupełnione
+    if not satisfied_clients or not banks_insurers or not years_of_experience or not loans_issued:
+        return jsonify({"status": "error", "message": "All fields are required!"}), 400
+
+    # Tworzenie nowego wpisu z danymi kontaktowymi
+    new_statistics = Statistics(
+        satisfied_clients=satisfied_clients,
+        banks_insurers=banks_insurers,
+        years_of_experience=years_of_experience,
+        loans_issued=loans_issued
+
+    )
+
+    # Dodanie nowego wpisu do sesji i zapisanie do bazy danych
+    db.session.add(new_statistics)
+    db.session.commit()
+
+    return jsonify({"status": "success", "message": "Link added!"}), 201
+
+
+    satisfied_clients = db.Column(db.Integer, nullable=False)
+    banks_insurers = db.Column(db.Integer, nullable=False)
+    years_of_experience = db.Column(db.Integer, nullable=False)
+    loans_issued = db.Column(db.Integer, nullable=False)
+
+
+
+# @app.route('/get_links', methods=['GET'])
+# def get_links():
+#     links = Link.query.all()
+#
+#     if links:
+#         result = [{
+#             'link_id': link.link_id,
+#             'name': link.name,
+#             'url': link.url,
+#
+#         } for link in links]
+#         return jsonify(result)
+#     else:
+#         return jsonify({"status": "error", "message": "No data found"}), 404
 
 
 
