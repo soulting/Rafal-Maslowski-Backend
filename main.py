@@ -364,7 +364,7 @@ def add_partner():
     data = request.get_json()
     img_url = data.get("img_url")
     description = data.get("description")
-    name = data.get("name"),
+    name = data.get("name")
     image_data = data.get("image_data")
 
     if not img_url or not description or not image_data or not name:
