@@ -1,44 +1,45 @@
-from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
-import bcrypt
 import base64
 import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+import bcrypt
 from dotenv import load_dotenv
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+
 load_dotenv()
 
 app = Flask(__name__)
 
 # Konfiguracja połączenia z bazą danych PostgreSQL
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DB_URL')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DB_URL")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
+
 
 def hash_password(password):
     # Generowanie soli i haszowanie hasła
     salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
+    hashed_password = bcrypt.hashpw(password.encode("utf-8"), salt)
     return hashed_password
 
 
-
 def send_email(subject, body):
-    from_email = os.getenv('FROM_EMAIL')
-    to_email = os.getenv('TO_EMAIL')
-    password = os.getenv('EMAIL_PASSWD')
-    smtp_server = os.getenv('SMTP_SERVER')
+    from_email = os.getenv("FROM_EMAIL")
+    to_email = os.getenv("TO_EMAIL")
+    password = os.getenv("EMAIL_PASSWD")
+    smtp_server = os.getenv("SMTP_SERVER")
     port = 587
 
     # Tworzenie wiadomości e-mail
     msg = MIMEMultipart()
-    msg['From'] = from_email
-    msg['To'] = to_email
-    msg['Subject'] = subject
-    msg.attach(MIMEText(body, 'plain'))
-
+    msg["From"] = from_email
+    msg["To"] = to_email
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain"))
 
     try:
         # Połączenie z serwerem SMTP
@@ -52,23 +53,26 @@ def send_email(subject, body):
     except Exception as e:
         return f"Błąd: {e}"
 
+
 # Definicja modelu dla tabel
 class Owner(db.Model):
-    __tablename__ = 'owner'
+    __tablename__ = "owner"
     owner_id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(255), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
 
+
 class PersonalInformation(db.Model):
-    __tablename__ = 'personal_information'
+    __tablename__ = "personal_information"
     personal_information_id = db.Column(db.Integer, primary_key=True)
-    image_url = db.Column(db.String(255),  nullable=False)
+    image_url = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=False)
 
+
 class ContactInfo(db.Model):
-    __tablename__ = 'contact_info'
+    __tablename__ = "contact_info"
     contact_info_id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(255),  nullable=False)
+    email = db.Column(db.String(255), nullable=False)
     phone = db.Column(db.String(255), nullable=False)
     address = db.Column(db.String(255), nullable=False)
     facebook = db.Column(db.String(255), nullable=False)
@@ -76,14 +80,16 @@ class ContactInfo(db.Model):
     twitter = db.Column(db.String(255), nullable=False)
     linkedin = db.Column(db.String(255), nullable=False)
 
+
 class Link(db.Model):
-    __tablename__ = 'links'
+    __tablename__ = "links"
     link_id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255),  nullable=False)
-    url = db.Column(db.String(255),  nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    url = db.Column(db.String(255), nullable=False)
+
 
 class Statistics(db.Model):
-    __tablename__ = 'statistics'
+    __tablename__ = "statistics"
     statistics_id = db.Column(db.Integer, primary_key=True)
     satisfied_clients = db.Column(db.Integer, nullable=False)
     banks_insurers = db.Column(db.Integer, nullable=False)
@@ -91,18 +97,30 @@ class Statistics(db.Model):
     loans_issued = db.Column(db.Integer, nullable=False)
 
 
-@app.route('/')
+class Partners(db.Model):
+    __tablename__ = "partners"
+    partner_id = db.Column(db.Integer, primary_key=True)
+    img_url = db.Column(db.String(255), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.String(255), nullable=False)
+
+
+@app.route("/")
 def index():
     return "Hello, Flask with PostgreSQL!"
 
-@app.route('/add_owner', methods=['POST'])
+
+@app.route("/add_owner", methods=["POST"])
 def add_owner():
     data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
+    username = data.get("username")
+    password = data.get("password")
 
     if not username or not password:
-        return jsonify({"status": "error", "message": "Username and password required!"}), 400
+        return (
+            jsonify({"status": "error", "message": "Username and password required!"}),
+            400,
+        )
 
     existing_owner = Owner.query.filter_by(username=username).first()
     if existing_owner:
@@ -114,67 +132,93 @@ def add_owner():
 
     return jsonify({"status": "success", "message": "Owner added!"}), 201
 
-@app.route('/get_owners', methods=['GET'])
+
+@app.route("/get_owners", methods=["GET"])
 def get_owners():
     owners = Owner.query.all()
     if owners:
-        result = [{'owner_id': owner.owner_id, 'username': owner.username, 'password': owner.password} for owner in owners]
+        result = [
+            {
+                "owner_id": owner.owner_id,
+                "username": owner.username,
+                "password": owner.password,
+            }
+            for owner in owners
+        ]
         return jsonify(result)
     else:
         return jsonify({"status": "error", "message": "No data found"}), 404
 
-@app.route('/add_personal_information', methods=['POST'])
+
+@app.route("/add_personal_information", methods=["POST"])
 def add_personal_information():
     data = request.get_json()
-    image_url = data.get('image_url')
-    description = data.get('description')
-    image_data = data.get('image_data')
+    image_url = data.get("image_url")
+    description = data.get("description")
+    image_data = data.get("image_data")
 
     if not image_url or not description or not image_data:
-        return jsonify({"status": "error", "message": "image and description required!"}), 400
+        return (
+            jsonify({"status": "error", "message": "image and description required!"}),
+            400,
+        )
 
     with open(f"01_files/01_profile_img/{image_url}", "wb") as fh:
         fh.write(base64.b64decode(image_data.split(",")[1]))
 
-    new_personal_information = PersonalInformation(image_url=image_url, description=description)
+    new_personal_information = PersonalInformation(
+        image_url=image_url, description=description
+    )
     db.session.add(new_personal_information)
     db.session.commit()
 
     return jsonify({"status": "success", "message": "Personal information added!"}), 201
 
-@app.route('/get_personal_information', methods=['GET'])
+
+@app.route("/get_personal_information", methods=["GET"])
 def get_last_owner():
     newest_personal_information = PersonalInformation.query.order_by(
-        PersonalInformation.personal_information_id.desc()).first()
+        PersonalInformation.personal_information_id.desc()
+    ).first()
 
-
-    with open(f"01_files/01_profile_img/{newest_personal_information.image_url}", "rb") as image_file:
+    with open(
+            f"01_files/01_profile_img/{newest_personal_information.image_url}", "rb"
+    ) as image_file:
         image_data = image_file.read()
-        image_data_b64 = base64.b64encode(image_data).decode('utf-8')
+        image_data_b64 = base64.b64encode(image_data).decode("utf-8")
 
     if newest_personal_information:
         result = {
-            'image_url': newest_personal_information.image_url,
-            'description': newest_personal_information.description,
-            'image_data': image_data_b64
+            "image_url": newest_personal_information.image_url,
+            "description": newest_personal_information.description,
+            "image_data": image_data_b64,
         }
         return jsonify(result)
     else:
         return jsonify({"status": "error", "message": "No data found"}), 404
 
-@app.route('/add_contacts', methods=['POST'])
+
+@app.route("/add_contacts", methods=["POST"])
 def add_contacts():
     data = request.get_json()
-    email = data.get('email')
-    phone = data.get('phone')
-    address = data.get('address')
-    facebook = data.get('facebook')
-    instagram = data.get('instagram')
-    twitter = data.get('twitter')
-    linkedin = data.get('linkedin')
+    email = data.get("email")
+    phone = data.get("phone")
+    address = data.get("address")
+    facebook = data.get("facebook")
+    instagram = data.get("instagram")
+    twitter = data.get("twitter")
+    linkedin = data.get("linkedin")
 
     # Sprawdzenie czy wszystkie wymagane pola są uzupełnione
-    if not email or not phone or not address or not facebook or not instagram or not twitter or not linkedin:
+    if (
+            not email
+            or not phone
+            or not address
+            or not facebook
+            or not instagram
+            or not twitter
+            or not linkedin
+    ):
         return jsonify({"status": "error", "message": "All fields are required!"}), 400
 
     # Tworzenie nowego wpisu z danymi kontaktowymi
@@ -185,7 +229,7 @@ def add_contacts():
         facebook=facebook,
         instagram=instagram,
         twitter=twitter,
-        linkedin=linkedin
+        linkedin=linkedin,
     )
 
     # Dodanie nowego wpisu do sesji i zapisanie do bazy danych
@@ -195,49 +239,49 @@ def add_contacts():
     return jsonify({"status": "success", "message": "Contact information added!"}), 201
 
 
-@app.route('/get_contacts', methods=['GET'])
+@app.route("/get_contacts", methods=["GET"])
 def get_contacts():
-    newest_contacts_info = ContactInfo.query.order_by(ContactInfo.contact_info_id.desc()).first()
+    newest_contacts_info = ContactInfo.query.order_by(
+        ContactInfo.contact_info_id.desc()
+    ).first()
 
     if newest_contacts_info:
         result = {
-            'contact_info_id': newest_contacts_info.contact_info_id,
-            'email': newest_contacts_info.email,
-            'phone': newest_contacts_info.phone,
-            'address': newest_contacts_info.address,
-            'facebook': newest_contacts_info.facebook,
-            'instagram': newest_contacts_info.instagram,
-            'twitter': newest_contacts_info.twitter,
-            'linkedin': newest_contacts_info.linkedin
+            "contact_info_id": newest_contacts_info.contact_info_id,
+            "email": newest_contacts_info.email,
+            "phone": newest_contacts_info.phone,
+            "address": newest_contacts_info.address,
+            "facebook": newest_contacts_info.facebook,
+            "instagram": newest_contacts_info.instagram,
+            "twitter": newest_contacts_info.twitter,
+            "linkedin": newest_contacts_info.linkedin,
         }
         return jsonify(result)
     else:
         return jsonify({"status": "error", "message": "No data found"}), 404
 
 
-@app.route('/send_mail', methods=['POST'])
+@app.route("/send_mail", methods=["POST"])
 def send_mail():
     data = request.get_json()
-    subject = data.get('subject')
-    body = data.get('body')
+    subject = data.get("subject")
+    body = data.get("body")
     result = send_email(subject, body)
     return jsonify({"message": result})
 
-@app.route('/add_link', methods=['POST'])
+
+@app.route("/add_link", methods=["POST"])
 def add_link():
     data = request.get_json()
-    name = data.get('name')
-    url = data.get('url')
+    name = data.get("name")
+    url = data.get("url")
 
     # Sprawdzenie czy wszystkie wymagane pola są uzupełnione
     if not name or not url:
         return jsonify({"status": "error", "message": "All fields are required!"}), 400
 
     # Tworzenie nowego wpisu z danymi kontaktowymi
-    new_link = Link(
-        name=name,
-        url=url
-    )
+    new_link = Link(name=name, url=url)
 
     # Dodanie nowego wpisu do sesji i zapisanie do bazy danych
     db.session.add(new_link)
@@ -246,31 +290,39 @@ def add_link():
     return jsonify({"status": "success", "message": "Link added!"}), 201
 
 
-@app.route('/get_links', methods=['GET'])
+@app.route("/get_links", methods=["GET"])
 def get_links():
     links = Link.query.all()
 
     if links:
-        result = [{
-            'link_id': link.link_id,
-            'name': link.name,
-            'url': link.url,
-
-        } for link in links]
+        result = [
+            {
+                "link_id": link.link_id,
+                "name": link.name,
+                "url": link.url,
+            }
+            for link in links
+        ]
         return jsonify(result)
     else:
         return jsonify({"status": "error", "message": "No data found"}), 404
 
-@app.route('/add_statistics', methods=['POST'])
+
+@app.route("/add_statistics", methods=["POST"])
 def add_statistics():
     data = request.get_json()
-    satisfied_clients = data.get('satisfied_clients')
-    banks_insurers = data.get('banks_insurers')
-    years_of_experience = data.get('years_of_experience')
-    loans_issued = data.get('loans_issued')
+    satisfied_clients = data.get("satisfied_clients")
+    banks_insurers = data.get("banks_insurers")
+    years_of_experience = data.get("years_of_experience")
+    loans_issued = data.get("loans_issued")
 
     # Sprawdzenie czy wszystkie wymagane pola są uzupełnione
-    if not satisfied_clients or not banks_insurers or not years_of_experience or not loans_issued:
+    if (
+            not satisfied_clients
+            or not banks_insurers
+            or not years_of_experience
+            or not loans_issued
+    ):
         return jsonify({"status": "error", "message": "All fields are required!"}), 400
 
     # Tworzenie nowego wpisu z danymi kontaktowymi
@@ -278,8 +330,7 @@ def add_statistics():
         satisfied_clients=satisfied_clients,
         banks_insurers=banks_insurers,
         years_of_experience=years_of_experience,
-        loans_issued=loans_issued
-
+        loans_issued=loans_issued,
     )
 
     # Dodanie nowego wpisu do sesji i zapisanie do bazy danych
@@ -289,25 +340,78 @@ def add_statistics():
     return jsonify({"status": "success", "message": "Statistics added!"}), 201
 
 
-
-
-@app.route('/get_statistics', methods=['GET'])
+@app.route("/get_statistics", methods=["GET"])
 def get_statistics():
     statistics = Statistics.query.all()
 
     if statistics:
-        result = [{
-        'satisfied_clients' : statistic.satisfied_clients,
-        'banks_insurers' : statistic.banks_insurers,
-        'years_of_experience' : statistic.years_of_experience,
-        'loans_issued' : statistic.loans_issued
-
-        } for statistic in statistics]
+        result = [
+            {
+                "satisfied_clients": statistic.satisfied_clients,
+                "banks_insurers": statistic.banks_insurers,
+                "years_of_experience": statistic.years_of_experience,
+                "loans_issued": statistic.loans_issued,
+            }
+            for statistic in statistics
+        ]
         return jsonify(result)
     else:
         return jsonify({"status": "error", "message": "No data found"}), 404
 
 
+@app.route("/add_partner", methods=["POST"])
+def add_partner():
+    data = request.get_json()
+    img_url = data.get("img_url")
+    description = data.get("description")
+    name = data.get("name"),
+    image_data = data.get("image_data")
 
-if __name__ == '__main__':
+    if not img_url or not description or not image_data or not name:
+        return (
+            jsonify(
+                {"status": "error", "message": "image, name and description required!"}
+            ),
+            400,
+        )
+
+    with open(f"01_files/02_partner_img/{img_url}", "wb") as fh:
+        fh.write(base64.b64decode(image_data.split(",")[1]))
+
+    new_partner = Partners(img_url=img_url, description=description, name=name)
+    db.session.add(new_partner)
+    db.session.commit()
+
+    return (
+        jsonify({"status": "success", "message": "Partner information added!"}),
+        201,
+    )
+
+
+# @app.route("/get_personal_information", methods=["GET"])
+# def get_last_owner():
+#     newest_personal_information = PersonalInformation.query.order_by(
+#         PersonalInformation.personal_information_id.desc()
+#     ).first()
+#
+#     with open(
+#             f"01_files/01_profile_img/{newest_personal_information.image_url}", "rb"
+#     ) as image_file:
+#         image_data = image_file.read()
+#         image_data_b64 = base64.b64encode(image_data).decode("utf-8")
+#
+#     if newest_personal_information:
+#         result = {
+#             "image_url": newest_personal_information.image_url,
+#             "description": newest_personal_information.description,
+#             "image_data": image_data_b64,
+#         }
+#         return jsonify(result)
+#     else:
+#         return jsonify({"status": "error", "message": "No data found"}), 404
+
+
+# partner_id, img_url, name, description
+
+if __name__ == "__main__":
     app.run(debug=True)
