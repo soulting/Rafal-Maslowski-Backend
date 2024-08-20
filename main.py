@@ -176,7 +176,7 @@ def add_personal_information():
 
 
 @app.route("/get_personal_information", methods=["GET"])
-def get_last_owner():
+def get_personal_information():
     newest_personal_information = PersonalInformation.query.order_by(
         PersonalInformation.personal_information_id.desc()
     ).first()
@@ -388,27 +388,28 @@ def add_partner():
     )
 
 
-# @app.route("/get_personal_information", methods=["GET"])
-# def get_last_owner():
-#     newest_personal_information = PersonalInformation.query.order_by(
-#         PersonalInformation.personal_information_id.desc()
-#     ).first()
-#
-#     with open(
-#             f"01_files/01_profile_img/{newest_personal_information.image_url}", "rb"
-#     ) as image_file:
-#         image_data = image_file.read()
-#         image_data_b64 = base64.b64encode(image_data).decode("utf-8")
-#
-#     if newest_personal_information:
-#         result = {
-#             "image_url": newest_personal_information.image_url,
-#             "description": newest_personal_information.description,
-#             "image_data": image_data_b64,
-#         }
-#         return jsonify(result)
-#     else:
-#         return jsonify({"status": "error", "message": "No data found"}), 404
+@app.route("/get_partners", methods=["GET"])
+def get_partners():
+    partners = Partners.query.all()
+    result = {"response": []}
+
+    if partners:
+        for partner in partners:
+            with open(f"01_files/02_partner_img/{partner.img_url}", "rb") as image_file:
+                image_data = image_file.read()
+                image_data_b64 = base64.b64encode(image_data).decode("utf-8")
+
+                result_item = {
+                    "img_url": partner.img_url,
+                    "description": partner.description,
+                    "name": partner.name,
+                    "image_data": image_data_b64
+                }
+                result["response"].append(result_item)
+
+        return jsonify(result)
+    else:
+        return jsonify({"status": "error", "message": "No data found"}), 404
 
 
 # partner_id, img_url, name, description
