@@ -1,13 +1,13 @@
 import base64
 import os
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+from email_handling import send_email
 
 import bcrypt
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+
+from google_drive_file_handling import uploadToDrive
 
 load_dotenv()
 
@@ -25,33 +25,6 @@ def hash_password(password):
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(password.encode("utf-8"), salt)
     return hashed_password
-
-
-def send_email(subject, body):
-    from_email = os.getenv("FROM_EMAIL")
-    to_email = os.getenv("TO_EMAIL")
-    password = os.getenv("EMAIL_PASSWD")
-    smtp_server = os.getenv("SMTP_SERVER")
-    port = 587
-
-    # Tworzenie wiadomości e-mail
-    msg = MIMEMultipart()
-    msg["From"] = from_email
-    msg["To"] = to_email
-    msg["Subject"] = subject
-    msg.attach(MIMEText(body, "plain"))
-
-    try:
-        # Połączenie z serwerem SMTP
-        server = smtplib.SMTP(smtp_server, port)
-        server.starttls()
-        server.login(from_email, password)
-        server.sendmail(from_email, to_email, msg.as_string())
-        server.quit()
-
-        return "E-mail wysłany pomyślnie!"
-    except Exception as e:
-        return f"Błąd: {e}"
 
 
 # Definicja modelu dla tabel
@@ -100,7 +73,7 @@ class Statistics(db.Model):
 class Partners(db.Model):
     __tablename__ = "partners"
     partner_id = db.Column(db.Integer, primary_key=True)
-    img_url = db.Column(db.String(255), nullable=False)
+    image_url = db.Column(db.String(255), nullable=False)
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=False)
 
@@ -153,18 +126,16 @@ def get_owners():
 @app.route("/add_personal_information", methods=["POST"])
 def add_personal_information():
     data = request.get_json()
-    image_url = data.get("image_url")
     description = data.get("description")
     image_data = data.get("image_data")
 
-    if not image_url or not description or not image_data:
+    if not description or not image_data:
         return (
             jsonify({"status": "error", "message": "image and description required!"}),
             400,
         )
 
-    with open(f"01_files/01_profile_img/{image_url}", "wb") as fh:
-        fh.write(base64.b64decode(image_data.split(",")[1]))
+    image_url = uploadToDrive(base64.b64decode(image_data.split(",")[1]), "profile_image")
 
     new_personal_information = PersonalInformation(
         image_url=image_url, description=description
@@ -181,17 +152,10 @@ def get_personal_information():
         PersonalInformation.personal_information_id.desc()
     ).first()
 
-    with open(
-            f"01_files/01_profile_img/{newest_personal_information.image_url}", "rb"
-    ) as image_file:
-        image_data = image_file.read()
-        image_data_b64 = base64.b64encode(image_data).decode("utf-8")
-
     if newest_personal_information:
         result = {
             "image_url": newest_personal_information.image_url,
             "description": newest_personal_information.description,
-            "image_data": image_data_b64,
         }
         return jsonify(result)
     else:
@@ -276,14 +240,11 @@ def add_link():
     name = data.get("name")
     url = data.get("url")
 
-    # Sprawdzenie czy wszystkie wymagane pola są uzupełnione
     if not name or not url:
         return jsonify({"status": "error", "message": "All fields are required!"}), 400
 
-    # Tworzenie nowego wpisu z danymi kontaktowymi
     new_link = Link(name=name, url=url)
 
-    # Dodanie nowego wpisu do sesji i zapisanie do bazy danych
     db.session.add(new_link)
     db.session.commit()
 
@@ -316,7 +277,6 @@ def add_statistics():
     years_of_experience = data.get("years_of_experience")
     loans_issued = data.get("loans_issued")
 
-    # Sprawdzenie czy wszystkie wymagane pola są uzupełnione
     if (
             not satisfied_clients
             or not banks_insurers
@@ -325,7 +285,6 @@ def add_statistics():
     ):
         return jsonify({"status": "error", "message": "All fields are required!"}), 400
 
-    # Tworzenie nowego wpisu z danymi kontaktowymi
     new_statistics = Statistics(
         satisfied_clients=satisfied_clients,
         banks_insurers=banks_insurers,
@@ -333,7 +292,6 @@ def add_statistics():
         loans_issued=loans_issued,
     )
 
-    # Dodanie nowego wpisu do sesji i zapisanie do bazy danych
     db.session.add(new_statistics)
     db.session.commit()
 
@@ -362,12 +320,11 @@ def get_statistics():
 @app.route("/add_partner", methods=["POST"])
 def add_partner():
     data = request.get_json()
-    img_url = data.get("img_url")
     description = data.get("description")
     name = data.get("name")
     image_data = data.get("image_data")
 
-    if not img_url or not description or not image_data or not name:
+    if not description or not image_data or not name:
         return (
             jsonify(
                 {"status": "error", "message": "image, name and description required!"}
@@ -375,10 +332,9 @@ def add_partner():
             400,
         )
 
-    with open(f"01_files/02_partner_img/{img_url}", "wb") as fh:
-        fh.write(base64.b64decode(image_data.split(",")[1]))
+    image_url = uploadToDrive(base64.b64decode(image_data.split(",")[1]), "partner_image")
 
-    new_partner = Partners(img_url=img_url, description=description, name=name)
+    new_partner = Partners(image_url=image_url, description=description, name=name)
     db.session.add(new_partner)
     db.session.commit()
 
@@ -395,24 +351,17 @@ def get_partners():
 
     if partners:
         for partner in partners:
-            with open(f"01_files/02_partner_img/{partner.img_url}", "rb") as image_file:
-                image_data = image_file.read()
-                image_data_b64 = base64.b64encode(image_data).decode("utf-8")
-
-                result_item = {
-                    "img_url": partner.img_url,
-                    "description": partner.description,
-                    "name": partner.name,
-                    "image_data": image_data_b64
-                }
-                result["response"].append(result_item)
+            result_item = {
+                "description": partner.description,
+                "name": partner.name,
+                "image_url": partner.image_url,
+            }
+            result["response"].append(result_item)
 
         return jsonify(result)
     else:
         return jsonify({"status": "error", "message": "No data found"}), 404
 
-
-# partner_id, img_url, name, description
 
 if __name__ == "__main__":
     app.run(debug=True)
