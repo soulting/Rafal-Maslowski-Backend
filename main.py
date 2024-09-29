@@ -1,17 +1,21 @@
 import base64
 import os
+from time import sleep
+
 from email_handling import send_email
 
 import bcrypt
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 
-from google_drive_file_handling import uploadToDrive
+from google_drive_file_handling import uploadToDrive    
 
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 
 # Konfiguracja połączenia z bazą danych PostgreSQL
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DB_URL")
@@ -361,6 +365,50 @@ def get_partners():
         return jsonify(result)
     else:
         return jsonify({"status": "error", "message": "No data found"}), 404
+
+
+@app.route('/getBlogPost', methods=['GET'])
+def get_blog_post():
+    # Pobieranie parametru "id" z URL
+    post_id = request.args.get('id')
+
+    posts = [
+        {
+            "title": "Wprowadzenie do JavaScript",
+            "description":
+                "Poznaj podstawy języka JavaScript i jego zastosowania w tworzeniu interaktywnych stron internetowych.",
+            "image": "https://i.imgur.com/1IMMwpK.png",
+        },
+        {
+            'title': "Zalety Programowania Funkcyjnego",
+            'description':
+                "Dowiedz się, dlaczego programowanie funkcyjne zyskuje na popularności i jakie są jego główne zalety.",
+            'image': "https://i.imgur.com/ghf5EI7.png",
+        },
+        {
+            'title': "Tworzenie Responsywnych Stron",
+            'description':
+                "Jak budować strony internetowe, które działają na różnych urządzeniach dzięki technikom responsywności.",
+            'image': "https://i.imgur.com/WCuVcSd.png",
+        },
+    ]
+
+    if post_id is None:
+        return jsonify({"error": "No blog post ID provided"}), 400
+
+    # Tu możesz pobrać dane posta na podstawie `post_id`
+    # Na przykład (zamiast tego wstaw swój kod pobierania danych):
+    blog_post = {
+        "id": post_id,
+        "title": posts[int(post_id)]["title"],
+        "description": posts[int(post_id)]["description"],
+        "image": posts[int(post_id)]["image"],
+    }
+
+    sleep(3)
+
+    return jsonify(blog_post)
+
 
 
 if __name__ == "__main__":

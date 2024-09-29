@@ -16,7 +16,7 @@ def send_email(subject, body):
 
     # Tworzenie wiadomości e-mail
     msg = MIMEMultipart()
-    msg["From"] = from_email
+    msg["From"] = "Rafał Masłowski Portfolio"
     msg["To"] = to_email
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain"))
