@@ -1,4 +1,4 @@
-gibcrypt==4.2.0
+bcrypt==4.2.0
 black==24.8.0
 blinker==1.8.2
 cachetools==5.5.0
