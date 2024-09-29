@@ -4,13 +4,13 @@ from time import sleep
 
 from email_handling import send_email
 
-import bcrypt
+# import bcrypt
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
-from google_drive_file_handling import uploadToDrive    
+from google_drive_file_handling import uploadToDrive
 
 load_dotenv()
 
@@ -408,7 +408,6 @@ def get_blog_post():
     sleep(3)
 
     return jsonify(blog_post)
-
 
 
 if __name__ == "__main__":
