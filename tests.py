@@ -1,124 +1,79 @@
-# import smtplib
-# import os
-# from dotenv import load_dotenv
-# from email.mime.multipart import MIMEMultipart
-# from email.mime.text import MIMEText
-#
-# load_dotenv()
-#
-# print(os.getenv('FROM_EMAIL'))
-#
-# def send_email(subject, body):
-#     from_email = os.getenv('FROM_EMAIL')
-#     password = os.getenv('EMAIL_PASSWD')
-#     smtp_server = os.getenv('SMTP_SERVER')
-#     port = 587
-#
-#     # Tworzenie wiadomości e-mail
-#     msg = MIMEMultipart()
-#     msg['From'] = from_email
-#     msg['To'] = os.getenv('TO_EMAIL')
-#     msg['Subject'] = subject
-#     msg.attach(MIMEText(body, 'plain'))
-#
-#     # with smtplib.SMTP(smtp_server, port) as server:
-#     #     server.starttls()  # Używa TLS dla bezpieczeństwa
-#     #     server.login(from_email, password)
-#     #     server.send_message(msg)
-#
-#     try:
-#         # Połączenie z serwerem SMTP
-#         server = smtplib.SMTP(smtp_server, port)
-#         server.starttls()
-#         server.login(from_email, password)
-#         server.sendmail(from_email, os.getenv('TO_EMAIL'), msg.as_string())
-#         server.quit()
-#
-#         return "E-mail wysłany pomyślnie!"
-#     except Exception as e:
-#         return f"Błąd: {e}"
-#
-#
-#
-# print(send_email("temat", 'tresc'))
 import base64
-import io
+import hashlib
 import os
+import secrets
+import string
+import requests
 import json
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
+
 from dotenv import load_dotenv
-from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload, MediaIoBaseUpload
 
 load_dotenv()
 
-SCOPES = ["https://www.googleapis.com/auth/drive.file"]
-SERVICE_ACCOUNT_INFO = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON"))
-PARENT_FOLDER_ID = "1k-gQAyy5LEigKU9jRlcltrWquhJEwx9x"
+CLIENT_ID = "843f1ece4c5b406e898fe2db517c8f0b"  # wprowadź Client_ID aplikacji
+CLIENT_SECRET = "qupea5XdQD76jYrqrbHJcyA8BiDf6tsDc9ShcB3fDLhDAwBFSr99GG5E10Ye2rqS"  # wprowadź Client_Secret aplikacji
+REDIRECT_URI = "http://localhost:8000"  # wprowadź redirect_uri
+AUTH_URL = "https://allegro.pl.allegrosandbox.pl/auth/oauth/authorize"
+TOKEN_URL = "https://allegro.pl.allegrosandbox.pl/auth/oauth/token"
 
 
-def authenticate():
-    credentials = service_account.Credentials.from_service_account_info(
-        SERVICE_ACCOUNT_INFO, scopes=SCOPES
-    )
-    return credentials
+def generate_code_verifier():
+    code_verifier = ''.join((secrets.choice(string.ascii_letters) for i in range(40)))
+    return code_verifier
 
 
-def upload_base64_to_drive(base64_data, file_name):
-    """Zdekoduj dane Base64 i załaduj plik na Google Drive."""
-    # Zdekoduj dane Base64
-    file_data = base64.b64decode(base64_data.split(",")[1])
-
-    # Utwórz obiekt BytesIO z danych binarnych
-    file_stream = io.BytesIO(file_data)
-
-    # Autoryzacja i utworzenie usługi Google Drive
-    credentials = authenticate()
-    service = build("drive", "v3", credentials=credentials)
-
-    # Metadane pliku
-    file_metadata = {"name": file_name, "parents": [PARENT_FOLDER_ID]}
-
-    # Przygotuj dane do przesłania
-    media = MediaIoBaseUpload(file_stream, mimetype="application/octet-stream")
-
-    # Utwórz i przesłać plik
-    file = (
-        service.files()
-        .create(body=file_metadata, media_body=media, fields="id")
-        .execute()
-    )
-
-    return file["id"]
+def generate_code_challenge(code_verifier):
+    hashed = hashlib.sha256(code_verifier.encode('utf-8')).digest()
+    base64_encoded = base64.urlsafe_b64encode(hashed).decode('utf-8')
+    code_challenge = base64_encoded.replace('=', '')
+    return code_challenge
 
 
-def downloadPhotoById(file_id, file_name):
-    credentials = authenticate()
-    service = build("drive", "v3", credentials=credentials)
-
-    # Zainicjuj żądanie pobierania pliku
-    request = service.files().get_media(fileId=file_id)
-    fh = io.BytesIO()
-    downloader = MediaIoBaseDownload(fh, request)
-
-    done = False
-    while not done:
-        status, done = downloader.next_chunk()
-        print(f"Pobieranie {int(status.progress() * 100)}%.")
-
-    # Zapisz pobrany plik na dysku
-    with open(f"./01_files/{file_name}", "wb") as f:
-        fh.seek(0)
-        f.write(fh.read())
-
-    print(f"Plik pobrany do {file_name}")
+def get_authorization_code(code_verifier):
+    code_challenge = generate_code_challenge(code_verifier)
+    authorization_redirect_url = f"{AUTH_URL}?response_type=code&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}" \
+                                 f"&code_challenge_method=S256&code_challenge={code_challenge}"
+    print(
+        "Zaloguj do Allegro - skorzystaj z url w swojej przeglądarce oraz wprowadź authorization code ze zwróconego url: ")
+    print(f"--- {authorization_redirect_url} ---")
+    authorization_code = input('code: ')
+    return authorization_code
 
 
-# Przykładowe użycie:
-# downloadPhotoById("11zk0fTyspAavwDMmEyPqerCA74fP1fwM", "downloaded_test1.png")
+def get_access_token(authorization_code, code_verifier):
+    try:
+        data = {'grant_type': 'authorization_code', 'code': authorization_code,
+                'redirect_uri': REDIRECT_URI, 'code_verifier': code_verifier}
+        access_token_response = requests.post(TOKEN_URL, data=data, verify=False,
+                                              allow_redirects=False)
+        response_body = json.loads(access_token_response.text)
+        return response_body
+    except requests.exceptions.HTTPError as err:
+        raise SystemExit(err)
 
-base64_data = "data:image/webp;base64,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"
 
-file_id = upload_base64_to_drive(base64_data, "test")
+def main():
+    code_verifier = generate_code_verifier()
+    authorization_code = get_authorization_code(code_verifier)
+    response = get_access_token(authorization_code, code_verifier)
+    access_token = response['access_token']
+    print(f"access token = {access_token}")
 
-print(file_id)
+
+def get_order_events(token):
+    try:
+        parameters = {
+            "type": ["READY_FOR_PROCESSING"]
+        }
+        url = "https://api.allegro.pl.allegrosandbox.pl/order/events"
+        headers = {'Authorization': 'Bearer ' + token, 'Accept': "application/vnd.allegro.public.v1+json"}
+        order_events_result = requests.get(url, headers=headers, verify=False, params=parameters)
+        return order_events_result
+    except requests.exceptions.HTTPError as err:
+        raise SystemExit(err)
+
+
+if __name__ == "__main__":
+    # main()
+    response = get_order_events(os.getenv("TOKEN"))
+    print(response.json())
