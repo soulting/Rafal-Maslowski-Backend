@@ -4,7 +4,7 @@ from time import sleep
 
 from email_handling import send_email
 
-# import bcrypt
+import bcrypt
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
