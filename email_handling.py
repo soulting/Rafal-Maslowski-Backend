@@ -7,11 +7,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def send_email(subject, body):
+def send_email(subject, body, email):
     from_email = os.getenv("FROM_EMAIL")
     to_email = os.getenv("TO_EMAIL")
     password = os.getenv("EMAIL_PASSWD")
     smtp_server = os.getenv("SMTP_SERVER")
+
     port = 587
 
     # Tworzenie wiadomości e-mail
@@ -19,6 +20,7 @@ def send_email(subject, body):
     msg["From"] = "Rafał Masłowski Portfolio"
     msg["To"] = to_email
     msg["Subject"] = subject
+    msg['Reply-To'] = email
     msg.attach(MIMEText(body, "plain"))
 
     try:

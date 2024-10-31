@@ -33,18 +33,21 @@ def index():
     return "Hello, Flask with PostgreSQL!"
 
 
-@app.route("/send_mail", methods=["POST"])
+@app.route("/sendMail", methods=["POST"])
 def send_mail():
     data = request.get_json()
-    subject = data.get("subject")
-    body = data.get("body")
-    result = send_email(subject, body)
+    subject = f"Wiadomość od {data.get("name")}"
+    body = data.get("messageText")
+    email = data.get("email")
+
+    result = send_email(subject, body, email)
+
+    print(result)
     return jsonify({"message": result})
 
 
 @app.route('/getBlogPost', methods=['GET'])
 def get_blog_post():
-    # Pobieranie parametru "id" z URL
     post_id = request.args.get('id')
 
     if post_id is None:
@@ -61,8 +64,6 @@ def get_blog_post():
         "date": values[int(post_id) * -1]["date"],
         "category": values[int(post_id) * -1]["category"]
     }
-
-    time.sleep(3)
 
     return jsonify(blog_post)
 
