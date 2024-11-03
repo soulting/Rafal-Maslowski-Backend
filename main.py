@@ -71,6 +71,7 @@ def get_blog_post():
 @app.route('/getBlogPosts', methods=['GET'])
 def get_blog_posts():
     values = sheed.sheet1.get_all_records()
+    time.sleep(3)
 
     return jsonify(values)
 
