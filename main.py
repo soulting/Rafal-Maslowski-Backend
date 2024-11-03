@@ -36,7 +36,7 @@ def index():
 @app.route("/sendMail", methods=["POST"])
 def send_mail():
     data = request.get_json()
-    subject = f"Wiadomość od {data.get("name")}"
+    subject = f"Wiadomość od {data.get('name')}"
     body = data.get("messageText")
     email = data.get("email")
 
