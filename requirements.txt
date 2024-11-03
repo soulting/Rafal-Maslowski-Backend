@@ -9,6 +9,7 @@ environs==11.0.0
 Flask==3.0.3
 Flask-Cors==5.0.0
 Flask-SQLAlchemy==3.1.1
+git-filter-repo==2.45.0
 google-api-core==2.19.1
 google-api-python-client==2.142.0
 google-auth==2.35.0
