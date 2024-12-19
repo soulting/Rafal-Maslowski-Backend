@@ -24,11 +24,13 @@ scopes = ["https://www.googleapis.com/auth/spreadsheets"]
 SERVICE_ACCOUNT_INFO = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON"))
 SHEET_ID = os.getenv("SHEET_KEY")
 SHEET2_ID = os.getenv("SHEET2_KEY")
+SHEET3_ID = os.getenv("SHEET3_KEY")
 
 credentials = Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO, scopes=scopes)
 client = gspread.authorize(credentials)
 sheet = client.open_by_key(SHEET_ID)
 sheet2 = client.open_by_key(SHEET2_ID)
+sheet3 = client.open_by_key(SHEET3_ID)
 
 app = Flask(__name__)
 CORS(app)
@@ -93,7 +95,7 @@ def login():
             return jsonify({"status": "error", "message": "Username and password are required"}), 400
 
         # Pobranie danych z arkusza
-        values = sheet2.sheet1.get_all_records()
+        values = sheet3.sheet1.get_all_records()
 
         # Zmienna do sprawdzenia poprawności hasła
         correct_password = False
@@ -113,7 +115,7 @@ def login():
         # Generowanie tokenu JWT
         payload = {
             "username": username,
-            "exp": datetime.now(timezone.utc) + timedelta(minutes=60)  # Token ważny przez 30 minut
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=120)  # Token ważny przez 30 minut
         }
 
         token = jwt.encode(payload, os.getenv("JWT_SECRET_KEY"), algorithm="HS256")
@@ -128,18 +130,17 @@ def login():
         return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"}), 500
 
 
+@app.route('/getMutables', methods=['GET'])
 def get_mutables():
     try:
-        # Pobranie danych z żądania (tylko jeśli to konieczne)
-        data = request.get_json()
-
         # Pobranie wszystkich rekordów z arkusza
         values = sheet2.sheet1.get_all_records()
+        print(values)
 
         # Zwrócenie danych w formacie JSON
         return jsonify({
             "status": "success",
-            "data": values
+            "data": values[0]
         }), 200
     except Exception as e:
         # Obsługa błędów
@@ -310,6 +311,51 @@ def edit_blog_post():
             return jsonify({"status": "error", "message": f"Failed to update post: {str(e)}"}), 500
 
         return jsonify({"status": "success", "message": "Post updated successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"}), 500
+
+
+@app.route('/editMutables', methods=['POST'])
+def edit_mutables():
+    try:
+        data = request.get_json()
+
+        # Sprawdzenie nagłówka autoryzacji
+        auth_header = request.headers.get("Authorization")
+        if not check_token(auth_header):
+            return jsonify({"status": "error", "message": "Token error"}), 401
+
+        # Przygotowanie danych do zaktualizowania
+        try:
+            updates = [
+                data["strona_glowna_cytat"],
+                data["opinia1"],
+                data["opinia1_autor"],
+                data["opinia2"],
+                data["opinia2_autor"],
+                data["opinia3"],
+                data["opinia3_autor"],
+                data["blog_tytul"],
+                data["blog_podtytul"],
+                data["o_mnie_tytul"],
+                data["o_mnie_cytat"],
+                data["o_mnie_obraz"],
+                data["email"],
+                data["telefon"],
+                data["facebook"],
+                data["adres"],
+                data["kontakt_cytat"]
+            ]
+
+            # Zaktualizowanie danych w arkuszu
+            sheet2.sheet1.insert_row(updates, index=2)
+        except KeyError as e:
+            return jsonify({"status": "error", "message": f"Missing required field: {str(e)}"}), 400
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"Failed to update post: {str(e)}"}), 500
+
+        return jsonify({"status": "success", "message": "mutables updated successfully"}), 200
 
     except Exception as e:
         return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"}), 500
